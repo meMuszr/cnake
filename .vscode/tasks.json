@@ -1,0 +1,17 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "build",
+            "type": "shell",
+            "command": "gcc",
+            "args": [
+                "-g",
+                "-lncurses",
+                "src/linkedlist.c src/libcnake.c src/cnake.c"
+            ],
+            "problemMatcher": [
+            ]
+        }
+    ]
+}
