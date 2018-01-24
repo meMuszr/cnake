@@ -2,16 +2,17 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "build",
+            "label": "build-debug",
             "type": "shell",
-            "command": "gcc",
+            "command": "make",
             "args": [
-                "-g",
-                "-lncurses",
-                "src/linkedlist.c src/libcnake.c src/cnake.c"
+                "debug"
             ],
-            "problemMatcher": [
-            ]
+            "problemMatcher": [],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
         }
     ]
 }
