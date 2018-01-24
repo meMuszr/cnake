@@ -18,6 +18,15 @@ void draw_snake(struct linked_list *list)
     while (length > 0)
         display(*(struct coordinate *)snakeNodes[--length].data, ACS_BLOCK);
 }
+void draw_score(int score)
+{
+    int scoreLength = snprintf(NULL, 0, "%d", score) + 1;
+    char *chScore = malloc(scoreLength);
+    snprintf(chScore, scoreLength, "%d", score);
+    attron(COLOR_PAIR(1));
+    mvprintw(0, 0, chScore);
+    free(chScore);
+}
 void SIGHandler(int sig)
 {
     endwin();
@@ -45,48 +54,48 @@ enum direction get_direction(int keyCode)
         return null;
     }
 }
+void init_ncurses(WINDOW **win, int *pY, int *pX)
+{
+    *win = initscr();
+    keypad(*win, 1);
+    nodelay(*win, true);
+    curs_set(0);
+    timeout(0);
+    cbreak();
+    noecho();
+    start_color();
+    init_pair(1, COLOR_GREEN, COLOR_BLACK);
+    init_pair(2, COLOR_WHITE, COLOR_WHITE);
+    int y = 0;
+    int x = 0;
+    getmaxyx(*win, y, x);
+    *pY = y;
+    *pX = x;
+}
 int main(void)
 {
     signal(SIGINT, SIGHandler);
     srand(time(NULL));
-    WINDOW *win = initscr();
-    keypad(win, 1);
-    nodelay(win, true);
-    start_color();
-    curs_set(0);
-    timeout(0);
-    init_pair(1, COLOR_GREEN, COLOR_GREEN);
-    init_pair(2, COLOR_WHITE, COLOR_WHITE);
-    cbreak();
-    noecho();
+    WINDOW *win = NULL;
     struct coordinate foodPiece, windowSize;
-    getmaxyx(win, windowSize.y, windowSize.x);
-    struct linked_list list = init_snake(&windowSize);
-    int ch = 0;
-    enum gamestate status = makefood;
+    struct coordinate *pFoodPiece = &foodPiece, *pWindowSize = &windowSize;
+    init_ncurses(&win, &windowSize.y, &windowSize.x);
+    struct linked_list snake = init_snake(&windowSize);
+    struct linked_list *pSnake = &snake;
+    make_food(pFoodPiece, pWindowSize);
+    int ch = 0, score = 0;
     enum direction dir = east;
     while (true)
     {
         getmaxyx(win, windowSize.y, windowSize.x);
         erase();
-        switch (status)
-        {
-        case makefood:
-            foodPiece = create_food_piece(&windowSize);
-            break;
-        case restart:
-            free_snake(&list);
-            list = init_snake(&windowSize);
-            break;
-        }
-        status = playing;
-        draw_snake(&list);
+        draw_snake(pSnake);
         display(foodPiece, ACS_LANTERN);
+        draw_score(score);
         refresh();
         ch = getch();
-        status = move_snake(&list, &windowSize, &foodPiece, &dir, ch != 0 && ch != 1 ? get_direction(ch) : null);
+        move_snake(pSnake, pWindowSize, &score, pFoodPiece, &dir, ch != 0 && ch != 1 ? get_direction(ch) : null);
         usleep(100000);
     }
-
     return 0;
 }
