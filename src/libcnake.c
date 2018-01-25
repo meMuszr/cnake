@@ -56,7 +56,7 @@ void free_snake(struct linked_list *list)
         free(removed);
     }
 }
-struct linked_list init_snake(struct coordinate *windowSize)
+static struct linked_list init_snake(struct coordinate *windowSize)
 {
     int x = windowSize->x / 2, y = windowSize->y / 2;
     struct linked_list list = linkedlist_init(create_coordinate_node(create_coordinate(x, y)));
@@ -64,27 +64,31 @@ struct linked_list init_snake(struct coordinate *windowSize)
         linkedlist_add_end(&list, create_coordinate_node(create_coordinate(x, y)));
     return list;
 }
-static void restart_game(struct linked_list *list, struct coordinate *windowSize, int *score)
-{
-    *score = 0;
-    free_snake(list);
-    *list = init_snake(windowSize);
-}
 void make_food(struct coordinate *foodPiece, struct coordinate *windowSize)
 {
     *foodPiece = create_food_piece(windowSize);
 }
-enum gamestate move_snake(struct linked_list *list, struct coordinate *windowSize, int *score, struct coordinate *foodPiece, enum direction *prevDirection, enum direction newDirection)
+struct game init_game(struct coordinate *windowSize)
 {
-    struct coordinate *snakeHead = list->head->data;
+    struct game game;
+    game.score = 0;
+    make_food(&game.foodPiece, windowSize);
+    game.direction = east;
+    game.snake = init_snake(windowSize);
+    return game;
+}
+enum gamestate update(struct game *game, struct coordinate *windowSize, enum direction newDirection)
+{
+    struct linked_list *pSnake = &game->snake;
+    struct coordinate *snakeHead = pSnake->head->data;
     struct coordinate originalHead = *snakeHead;
-    enum direction prevDir = *prevDirection;
+    enum direction prevDir = game->direction;
     if (newDirection == null)
         newDirection = prevDir;
     else if (!(prevDir + newDirection))
         newDirection = prevDir;
     else
-        *prevDirection = newDirection;
+        game->direction = newDirection;
     switch (newDirection)
     {
     case north:
@@ -100,30 +104,32 @@ enum gamestate move_snake(struct linked_list *list, struct coordinate *windowSiz
         snakeHead->x++;
         break;
     }
-    if (hit(snakeHead, foodPiece))
+    if (hit(snakeHead, &game->foodPiece))
     {
-        linkedlist_add_at(list, create_coordinate_node(create_coordinate(originalHead.x, originalHead.y)), 1);
-        make_food(foodPiece, windowSize);
-        *score = ++*score;
+        linkedlist_add_at(pSnake, create_coordinate_node(create_coordinate(originalHead.x, originalHead.y)), 1);
+        make_food(&game->foodPiece, windowSize);
+        game->score = ++game->score;
         return makefood;
     }
-    else if (linkedlist_get_length(list) > 3 && snake_hit_self(list))
+    else if (linkedlist_get_length(pSnake) > 3 && snake_hit_self(pSnake))
     {
-        restart_game(list, windowSize, score);
+        free_snake(pSnake);
+        *game = init_game(windowSize);
         return restart;
     }
     else if (snake_hit_wall(snakeHead, windowSize))
     {
-        restart_game(list, windowSize, score);
+        free_snake(pSnake);
+        *game = init_game(windowSize);
         return restart;
     }
     else
     {
-        struct node *replacePiece = linkedlist_remove_tail(list);
+        struct node *replacePiece = linkedlist_remove_tail(pSnake);
         struct coordinate *replacePieceData = replacePiece->data;
         replacePieceData->x = originalHead.x;
         replacePieceData->y = originalHead.y;
-        linkedlist_add_at(list, replacePiece, 1);
+        linkedlist_add_at(pSnake, replacePiece, 1);
     }
     return playing;
 }

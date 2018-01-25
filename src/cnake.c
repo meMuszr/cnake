@@ -4,7 +4,6 @@
 #include <unistd.h>
 #include <time.h>
 #include "includes/libcnake.h"
-#include "includes/linkedlist.h"
 void display(struct coordinate coord, const chtype ch)
 {
     attron(COLOR_PAIR(2));
@@ -77,24 +76,23 @@ int main(void)
     signal(SIGINT, SIGHandler);
     srand(time(NULL));
     WINDOW *win = NULL;
-    struct coordinate foodPiece, windowSize;
-    struct coordinate *pFoodPiece = &foodPiece, *pWindowSize = &windowSize;
+    struct coordinate windowSize;
+    struct coordinate *pWindowSize = &windowSize;
     init_ncurses(&win, &windowSize.y, &windowSize.x);
-    struct linked_list snake = init_snake(&windowSize);
-    struct linked_list *pSnake = &snake;
-    make_food(pFoodPiece, pWindowSize);
-    int ch = 0, score = 0;
+    struct game game = init_game(pWindowSize);
+    struct linked_list *pSnake = &game.snake;
+    int ch = 0;
     enum direction dir = east;
     while (true)
     {
         getmaxyx(win, windowSize.y, windowSize.x);
         erase();
         draw_snake(pSnake);
-        display(foodPiece, ACS_LANTERN);
-        draw_score(score);
+        display(game.foodPiece, ACS_LANTERN);
+        draw_score(game.score);
         refresh();
         ch = getch();
-        move_snake(pSnake, pWindowSize, &score, pFoodPiece, &dir, ch != 0 && ch != 1 ? get_direction(ch) : null);
+        update(&game,pWindowSize, ch != 0 && ch != 1 ? get_direction(ch) : null);
         usleep(100000);
     }
     return 0;

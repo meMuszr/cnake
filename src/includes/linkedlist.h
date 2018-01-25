@@ -1,3 +1,6 @@
+#ifndef LINKEDLIST_H
+#define LINKEDLIST_H
+
 #include <stddef.h>
 struct node
 {
@@ -21,3 +24,5 @@ void iterate(struct linked_list *list, void (*cb)(struct node *));
 struct node *linkedlist_remove_head(struct linked_list *list);
 struct node *linkedlist_remove_tail(struct linked_list *list);
 struct node *linkedlist_remove_node_at(struct linked_list *list, unsigned int index);
+
+#endif
